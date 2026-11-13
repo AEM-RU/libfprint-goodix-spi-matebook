@@ -1,8 +1,8 @@
-# Goodix GDIX51C0 Linux fingerprint driver · Huawei MateBook D15 2022
+# Goodix GDIX51C0 Linux fingerprint driver · Huawei MateBook D15 2022 / D16 2022
+
+[Русский](README.md) · [中文](README_ZH.md)
 
 [Detailed investigation and fix (Chinese)](https://xingwangzhe.fun/posts/matebook-d15-goodix-gdix51c0-fingerprint/)
-
-[中文](README.md)
 
 ## Hardware manufacturer and tested hosts
 
@@ -10,12 +10,15 @@
 
 | Host | Evidence |
 | --- | --- |
-| Huawei MateBook D15 2022, BoF-XX / M1010 | Right index finger enrollment completed and `fprintd-verify` returned `verify-match`; GDM login after reboot has not been checked |
+| Huawei MateBook D16 2022, RLEF-XX | This repository: install, spidev binding, enrollment, and `fprintd-verify` verified |
+| Huawei MateBook D15 2022, BoF-XX / M1010 | d15-bofxx branch: right index finger enrollment completed and `fprintd-verify` returned `verify-match`; GDM login after reboot has not been checked |
 | Huawei MateBook 16s | Hardware tested by the [upstream project](https://github.com/berkekbgz/libfprint-goodix-spi); not retested on this fork |
 
 ## Fix in this fork
 
-The upstream driver keeps the SPI bus quiet for about 80 ms while the sensor captures an image. On BoF-XX, IRQ rises during that interval. The listener consumes the edge while reads are suppressed and then waits for another edge, so TLS image response `0x17` times out. This fork wakes the listener and rechecks the IRQ level when suppression ends. It also starts the quiet period in the thread that receives the capture ACK. See [D15-README_EN.md](D15-README_EN.md) for the local evidence, changed files, and rollback path.
+The upstream driver keeps the SPI bus quiet for about 80 ms while the sensor captures an image. On BoF-XX, IRQ rises during that interval. The listener consumes the edge while reads are suppressed and then waits for another edge, so TLS image response `0x17` times out. The d15-bofxx branch wakes the listener and rechecks the IRQ level when suppression ends. It also starts the quiet period in the thread that receives the capture ACK. See [D15-README_EN.md](D15-README_EN.md) for the local evidence, changed files, and rollback path.
+
+This copy merges the d15-bofxx udev wildcard fix (`acpi:GDIX51C0:*`) into the main branch and updates `install.sh` so the post-build check accepts the wildcard form as well; previously every fresh install aborted with "generated udev rules do not contain supported ACPI id GDIX51C0". Tested on Huawei MateBook D16 2022 (RLEF-XX): install, spidev binding, enrollment, and `fprintd-verify` work.
 
 ## Install and use
 
